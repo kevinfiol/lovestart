@@ -12,7 +12,7 @@ local function resize(s)
     vars.sx, vars.sy = s, s
 end
 
-function init()
+local function init()
     rooms:goToRoom('Room_1')
 end
 
@@ -52,7 +52,12 @@ end
 function love.update(dt)
     if _G.DEBUG then
         -- file hotswap
-        require('lib.lurker').update()
+        local lurker = require 'lib.lurker'
+        lurker.update()
+
+        -- will call init after every swap
+        lurker.postswap = init
+
         debug_input:update()
 
         if debug_input:pressed('reset') then

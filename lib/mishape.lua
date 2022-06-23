@@ -56,6 +56,7 @@ local MAP = {
 MAP.fn = MAP['function']
 MAP.undefined = MAP['nil']
 MAP.defined = MAP['notnil']
+MAP.bool = MAP['boolean']
 
 local addError = function(res, v_type, x, id)
     if res.ok then res.ok = false end

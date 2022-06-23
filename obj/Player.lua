@@ -1,30 +1,45 @@
-local lume = require 'lib.lume'
 local baton = require 'lib.baton'
-local vars = require 'vars'
 local Enum = require 'enum'
-
 local GameObject = require 'engine.GameObject'
-local Paddle = require 'obj.Paddle'
-local Ball = require 'obj.Ball'
+local utils = require 'engine.utils'
 
-local Player = Paddle:extend()
+local Player = GameObject:extend()
+
+local SPEED = 300
+local WIDTH = 20
+local HEIGHT = 20
 
 function Player:new(area, x, y, opts)
     opts = opts or {}
-    Player.super.new(self, area, x, y, opts)
+    opts.width = opts.width or WIDTH
+    opts.height = opts.height or HEIGHT
+    Player.super.new(self, area, x, y, opts.width, opts.height)
 
-    self.collision = { class = Enum.Collision.Class.Player }
+    self.collision = {
+        class = Enum.Collision.Class.Player,
+        events = {
+            [Enum.Collision.Class.Wall] = utils.bind(self, self.onWallCollision)
+        }
+    }
+
+    self.vel = { x = 0, y = 0 }
+    self.accel = { x = 0, y = 0 }
+    self.max_vel = { x = 200, y = 200 }
+    self.drag = { x = 800, y = 800 }
+    self.last = { x = x, y = y }
+    self.angle = 0
+    self.angular_vel = 0
+
     self.input = baton.new({
         controls = {
-            shoot = { 'mouse:1' }
+            left = { 'key:left', 'key:a' },
+            right = { 'key:right', 'key:d' },
+            up = { 'key:up', 'key:w' },
+            down = { 'key:down', 'key:s' }
         }
     })
 
-    self.shootBall = opts.shootBall or GameObject.static.noop
-
     self:schema({
-        input = 'table',
-        shootBall = 'function',
         collision = {
             class = 'string'
         }
@@ -33,28 +48,43 @@ end
 
 function Player:update(dt)
     Player.super.update(self, dt)
-    self.y = (vars.mouse.y / vars.sy) - self.height / 2
 
-    self.input:update()
-    self:shoot()
-end
-
-function Player:draw()
-    Player.super.draw(self)
-end
-
-function Player:shoot()
-    if self.input:pressed('shoot') then
-        local x = self.x + self.width
-        local y = self.y + (self.height / 2) - (Ball.static.HEIGHT / 2)
-        local vx, vy = lume.vector(0, 1)
-        self.shootBall(x, y, { x = vx, y = vy })
+    if self.input then
+        self.input:update()
+        self:move()
     end
 end
 
-function Player:destroy()
-    self.input = nil
-    Player.super.destroy(self)
+function Player:draw()
+    love.graphics.rectangle(
+        'line',
+        self.x,
+        self.y,
+        self.width,
+        self.height
+    )
+end
+
+function Player:move()
+    if self.input:down('right') then
+        self.accel.x = SPEED
+    elseif self.input:down('left') then
+        self.accel.x = -SPEED
+    else
+        self.accel.x = 0
+    end
+
+    if self.input:down('up') then
+        self.accel.y = -SPEED
+    elseif self.input:down('down') then
+        self.accel.y = SPEED
+    else
+        self.accel.y = 0
+    end
+end
+
+function Player:onWallCollision(wall, side)
+    print('hit ' .. wall.collision.class .. ' at ' .. side)
 end
 
 return Player

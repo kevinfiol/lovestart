@@ -7,11 +7,11 @@ GameObject.static = {
     noop = function() end
 }
 
-function GameObject:new(area, x, y)
+function GameObject:new(area, x, y, width, height)
     self.area = area
     self.x, self.y = x, y
-    self.width = 1
-    self.height = 1
+    self.width = width or 1
+    self.height = height or 1
     self.dead = false
 end
 
@@ -80,8 +80,8 @@ end
 
 function GameObject:reject(o)
     if not self:overlaps(o) then return end
-    local diff_x = self:middleX() - o.middleX()
-    local diff_y = self.middleY() - o:middleY()
+    local diff_x = self:middleX() - o:middleX()
+    local diff_y = self:middleY() - o:middleY()
 
     if math.abs(diff_x) > math.abs(diff_y) then
         if diff_x > 0 then

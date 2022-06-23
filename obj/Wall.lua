@@ -5,19 +5,27 @@ local Wall = GameObject:extend()
 
 function Wall:new(area, x, y, opts)
     opts = opts or {}
-    Wall.super.new(self, area, x, y)
+    Wall.super.new(self, area, x, y, opts.width, opts.height)
 
-    self.collision = { class = Enum.Collision.Class.Wall }
-    self.width = opts.width
-    self.height = opts.height
+    self.collision = {
+        class = Enum.Collision.Class.Wall,
+        immovable = true
+    }
+
+    self.last = { x = x, y = y }
 
     self:schema({
         x = 'number',
         y = 'number',
         width = 'number',
         height = 'number',
+        last = {
+            x = 'number',
+            y = 'number'
+        },
         collision = {
-            class = 'string'
+            class = 'string',
+            immovable = 'boolean'
         }
     })
 end
@@ -33,13 +41,6 @@ function Wall:draw()
         self.width,
         self.height
     )
-end
-
-function Wall:destroy()
-    self.width = nil
-    self.height = nil
-    self.collision = nil
-    Wall.super.destroy(self)
 end
 
 return Wall

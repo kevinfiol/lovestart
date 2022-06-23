@@ -1,69 +1,40 @@
+local vars = require 'vars'
 local lume = require 'lib.lume'
 local Object = require 'lib.classic'
-local utils = require 'engine.utils'
 local Area = require 'engine.Area'
-local vars = require 'vars'
 
-local Walls = require 'elements.Walls'
+local Walls = require 'obj.Walls'
 local Player = require 'obj.Player'
-local Paddle = require 'obj.Paddle'
-local Ball = require 'obj.Ball'
 
-local BumpCollision = require 'systems.BumpCollision'
 local OffscreenDeath = require 'systems.OffscreenDeath'
+local Physics = require 'systems.Physics'
+local Collision = require 'systems.Collision'
 
 local Room_1 = Object:extend()
 
-local PADDLE_HEIGHT = 28
-local START_X_OFFSET = 10
-local MAX_BALLS = 1
-
-local FONT = love.graphics.newFont('assets/fonts/m5x7.ttf', 16)
-FONT:setFilter('nearest', 'nearest')
+-- local FONT = love.graphics.newFont('assets/fonts/m5x7.ttf', 16)
+-- FONT:setFilter('nearest', 'nearest')
 
 function Room_1:new()
     self.area = Area(
         lume.merge(
-            BumpCollision.group,
-            OffscreenDeath.group
+            OffscreenDeath.group,
+            Physics.group,
+            Collision.group
         )
     , {
-        BumpCollision.system,
-        OffscreenDeath.system
+        OffscreenDeath.system,
+        Physics.system,
+        Collision.system
     })
 
     self.walls = Walls(self.area)
     self.canvas = love.graphics.newCanvas(vars.gw, vars.gh)
-    self.ball = nil
-    self.enemy = nil
 
-    local ball_count = 0
-
-    local removeBall = function()
-        ball_count = math.max(ball_count - 1, 0)
-        self.ball = nil
-    end
-
-    local shootBall = utils.bind(self, function(bound, x, y, vector)
-        if ball_count >= MAX_BALLS then return end
-        self.ball = Ball(bound.area, x, y, { vector = vector, onDestroy = removeBall })
-
-        bound.area:queue({ self.ball })
-        ball_count = ball_count + 1
-    end)
-
-    local player = Player(self.area, 0 + START_X_OFFSET, vars.gh / 2 - (PADDLE_HEIGHT / 2), {
-        shootBall = shootBall,
-        height = PADDLE_HEIGHT
-    })
-
-    self.enemy = Paddle(self.area, vars.gw - 8 - START_X_OFFSET, vars.gh / 2 - (PADDLE_HEIGHT / 2), {
-        height = PADDLE_HEIGHT
-    })
+    local player = Player(self.area, 10, 10)
 
     self.area:queue({
-        player,
-        self.enemy
+        player
     })
 end
 
@@ -87,10 +58,9 @@ function Room_1:draw()
         self.area:draw()
         -- _G.camera:detach()
 
-        love.graphics.setFont(FONT)
-        -- love.graphics.setColor(255, 255, 255, 255)
-        love.graphics.print(vars.score.p1, vars.gw - (vars.gw - 20), vars.gh / 14)
-        love.graphics.print(vars.score.p2, vars.gw - 30, vars.gh / 14)
+        -- love.graphics.setFont(FONT)
+        -- love.graphics.print(vars.score.p1, vars.gw - (vars.gw - 20), vars.gh / 14)
+        -- love.graphics.print(vars.score.p2, vars.gw - 30, vars.gh / 14)
 
         -- draw end
         love.graphics.setCanvas()
