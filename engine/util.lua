@@ -41,6 +41,14 @@ local type_count = function()
 end
 
 return {
+    contains = function(list, val)
+        for _, v in ipairs(list) do
+            if v == val then return true end
+        end
+        
+        return false
+    end,
+
     bind = function(x, fn)
         return function(...)
             local args = {...}

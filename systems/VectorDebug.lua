@@ -24,6 +24,7 @@ function VectorDebug:draw()
 end
 
 return {
+    GROUP_NAME = GROUP_NAME,
     system = VectorDebug,
     group = group
 }

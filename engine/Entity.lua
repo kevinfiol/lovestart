@@ -1,27 +1,29 @@
 local Object = require 'lib.classic'
 local mishape = require 'lib.mishape'
 
-local GameObject = Object:extend()
+local Entity = Object:extend()
 
-GameObject.static = {
+Entity.static = {
     noop = function() end
 }
 
-function GameObject:new(area, x, y, width, height)
+function Entity:new(class_name, area, x, y, width, height)
+    self.class_name = class_name
     self.area = area
+    self.systems = {}
     self.x, self.y = x, y
     self.width = width or 1
     self.height = height or 1
     self.dead = false
 end
 
-function GameObject:update(dt)
+function Entity:update(dt)
 end
 
-function GameObject:draw()
+function Entity:draw()
 end
 
-function GameObject:destroy()
+function Entity:destroy()
     self.dead = true
     self.area = nil
 
@@ -30,55 +32,55 @@ function GameObject:destroy()
     end
 end
 
-function GameObject:getPosition()
+function Entity:getPosition()
     return self.x, self.y
 end
 
-function GameObject:setPosition(pos)
+function Entity:setPosition(pos)
     if pos.x then self.x = pos.x end
     if pos.y then self.y = pos.y end
 end
 
-function GameObject:left(left)
+function Entity:left(left)
     if left then self.x = left end
     return self.x
 end
 
-function GameObject:right(right)
+function Entity:right(right)
     if right then self.x = right - self.width end
     return self.x + self.width
 end
 
-function GameObject:top(top)
+function Entity:top(top)
     if top then self.y = top end
     return self.y
 end
 
-function GameObject:bottom(bottom)
+function Entity:bottom(bottom)
     if bottom then self.y = bottom - self.height end
     return self.y + self.height
 end
 
-function GameObject:middleX(middle)
+function Entity:middleX(middle)
     if middle then self.x = middle - self.width / 2 end
     return self.x + self.width / 2
 end
 
-function GameObject:middleY(middle)
+function Entity:middleY(middle)
     if middle then self.y = middle - self.height / 2 end
     return self.y + self.height / 2
 end
 
-function GameObject:middle()
+function Entity:middle()
     return (self.x + self.width / 2), (self.y + self.height / 2)
 end
 
-function GameObject:overlaps(o)
+function Entity:overlaps(o)
     return o.x + o.width > self.x and o.x < self.x + self.width and
         o.y + o.height > self.y and o.y < self.y + self.height
 end
 
-function GameObject:reject(o)
+function Entity:reject(o)
     if not self:overlaps(o) then return end
     local diff_x = self:middleX() - o:middleX()
     local diff_y = self:middleY() - o:middleY()
@@ -99,7 +101,7 @@ function GameObject:reject(o)
 end
 
 -- debug methods
-function GameObject:schema(schema, custom_map)
+function Entity:schema(schema, custom_map)
     if not _G.DEBUG then return end
     local validator = mishape(schema, custom_map)
 
@@ -114,4 +116,4 @@ function GameObject:schema(schema, custom_map)
     end
 end
 
-return GameObject
+return Entity

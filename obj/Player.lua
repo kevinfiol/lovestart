@@ -1,9 +1,9 @@
 local baton = require 'lib.baton'
 local Enum = require 'enum'
-local GameObject = require 'engine.GameObject'
-local utils = require 'engine.utils'
+local Entity = require 'engine.Entity'
+local util = require 'engine.util'
 
-local Player = GameObject:extend()
+local Player = Entity:extend()
 
 local SPEED = 300
 local WIDTH = 20
@@ -13,15 +13,9 @@ function Player:new(area, x, y, opts)
     opts = opts or {}
     opts.width = opts.width or WIDTH
     opts.height = opts.height or HEIGHT
-    Player.super.new(self, area, x, y, opts.width, opts.height)
+    Player.super.new(self, 'PLAYER', area, x, y, opts.width, opts.height)
 
-    self.collision = {
-        class = Enum.Collision.Class.Player,
-        events = {
-            [Enum.Collision.Class.Wall] = utils.bind(self, self.onWallCollision)
-        }
-    }
-
+    self.systems = { 'physics', 'collision' }
     self.vel = { x = 0, y = 0 }
     self.accel = { x = 0, y = 0 }
     self.max_vel = { x = 200, y = 200 }
@@ -29,6 +23,12 @@ function Player:new(area, x, y, opts)
     self.last = { x = x, y = y }
     self.angle = 0
     self.angular_vel = 0
+    self.collision = {
+        class = Enum.Collision.Class.Player,
+        events = {
+            [Enum.Collision.Class.Wall] = util.bind(self, self.onWallCollision)
+        }
+    }
 
     self.input = baton.new({
         controls = {
@@ -41,7 +41,8 @@ function Player:new(area, x, y, opts)
 
     self:schema({
         collision = {
-            class = 'string'
+            class = 'string',
+            events = 'object'
         }
     })
 end
@@ -53,6 +54,8 @@ function Player:update(dt)
         self.input:update()
         self:move()
     end
+
+    p(self.touching)
 end
 
 function Player:draw()
@@ -84,7 +87,9 @@ function Player:move()
 end
 
 function Player:onWallCollision(wall, side)
-    print('hit ' .. wall.collision.class .. ' at ' .. side)
+    -- print('hit ' .. wall.collision.class .. ' at ' .. side)
+    -- print('position when hit: ')
+    -- p(self.y)
 end
 
 return Player

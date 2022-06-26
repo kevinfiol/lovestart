@@ -1,21 +1,27 @@
+local util = require 'engine.util'
 local lume = require 'lib.lume'
 local Object = require 'lib.classic'
+local mishape = require 'lib.mishape'
+local log = require 'lib.log'
 
 local GROUP_NAME = 'physics'
+local VALIDATOR = mishape({
+    x = 'number',
+    y = 'number',
+    angle = 'number',
+    angular_vel = 'number',
+    vel = { x = 'number', y = 'number' },
+    accel = { x = 'number', y = 'number' },
+    max_vel = { x = 'number', y = 'number' },
+    drag = { x = 'number', y = 'number' },
+    last = { x = 'number', y = 'number' },
+})
 
 local group = {
     [GROUP_NAME] = {
-        filter = {
-            'x',
-            'y',
-            'vel',
-            'accel',
-            'max_vel',
-            'drag',
-            'angle',
-            'angular_vel',
-            'last'
-        }
+        filter = function (e)
+            return lume.find(e.systems, GROUP_NAME) ~= nil
+        end
     }
 }
 
@@ -24,14 +30,24 @@ local Physics = Object:extend()
 function Physics:init()
 end
 
+function Physics:addToGroup(group_name, e)
+    if group_name == GROUP_NAME then
+        if _G.DEBUG then
+            if not VALIDATOR(e).ok then
+                local err = '[' .. GROUP_NAME .. '] objects must follow mishape schema.'
+                    .. '\n\t entity class_name: ' .. e.class_name
+                error(err)
+            end
+        end
+    end
+end
+
 function Physics:update(dt)
     if dt == 0 then return end
     for _, e in ipairs(self.pool.groups[GROUP_NAME].entities) do
-        -- store last position & h + w
+        -- store last position
         e.last.x = e.x
         e.last.y = e.y
-        e.last.width = e.width
-        e.last.height = e.height
 
         -- update velocity
         e.vel.x = e.vel.x + e.accel.x * dt
@@ -73,6 +89,7 @@ function Physics:update(dt)
 end
 
 return {
+    GROUP_NAME = GROUP_NAME,
     system = Physics,
     group = group
 }

@@ -1,28 +1,50 @@
-local lume = require 'lib.lume'
-local Enum = require 'enum'
+local util = require 'engine.util'
+local mishape = require 'lib.mishape'
 local shash = require 'lib.shash'
 local Object = require 'lib.classic'
+local Enum = require 'enum'
 
 local GROUP_NAME = 'collision'
 local CLASS = Enum.Collision.Class
-
-local collisions
-
-local ignores = {
-    [CLASS.Player] = { CLASS.Wall },
-    [CLASS.Wall] = {}
-}
+local VALIDATOR = mishape({
+    collision = {
+        class = 'string',
+        immovable = 'boolean|nil',
+        events = 'object|nil',
+        touching = 'object|nil'
+    },
+    last = 'object|nil'
+})
 
 local group = {
     [GROUP_NAME] = {
-        filter = {
-            'collision',
-            'last'
-        }
+        filter = function (e)
+            return util.contains(e.systems, GROUP_NAME)
+        end
     }
 }
 
-local properties = {}
+-- spatial hash
+local collisions
+
+-- collision class ignores
+-- by default, all classes collide with other classes
+local ignores = {
+    [CLASS.Player] = {},
+    [CLASS.Wall] = {}
+}
+
+-- essentially a weakMap holding properties for each entity,
+-- but only in the scope of this module
+-- reduces property pollution in entities
+local entity_props = {}
+
+local function isTouching(a, b)
+    return a.x + a.width >= b.x
+        and a.x <= b.x + b.width
+        and a.y + a.height >= b.y
+        and a.y <= b.y + b.height
+end
 
 local function wasVerticallyAligned(a, b)
     return a.last.y < b.last.y + b.height
@@ -42,8 +64,26 @@ end
 
 function Collision:addToGroup(group_name, e)
     if group_name == GROUP_NAME then
+        if _G.DEBUG then
+            if not VALIDATOR(e).ok then
+                local err = '[' .. GROUP_NAME .. '] objects must follow mishape schema.'
+                    .. '\n\t entity class_name: ' .. e.class_name
+                error(err)
+            end
+        end
+
+        if not e.last then
+            -- monkey-patch it in in the case that the entity is not using the `physics` system
+            -- in this case, the entity is most likely an `immovable`
+            e.last = { x = e.x, y = e.y }
+        end
+
+        if not e.touching then
+            e.touching = {}
+        end
+
         -- init entity properties only visible to this system
-        properties[e] = { has_collided = false }
+        entity_props[e] = { has_collided = false }
 
         -- add to spatial hash
         collisions:add(e, e.x, e.y, e.width, e.height)
@@ -54,7 +94,7 @@ end
 
 function Collision:removeFromGroup(group_name, e)
     if group_name == GROUP_NAME then
-        properties[e] = nil
+        entity_props[e] = nil
         collisions:remove(e)
     end
 end
@@ -71,7 +111,8 @@ function Collision:update(dt)
 
         collisions:each(e, function(o)
             overlaps = true
-            local collide = not e.collision.immovable and lume.find(ignores[e.collision.class]) == nil
+            local collide = not e.collision.immovable
+                and not util.contains(ignores[e.collision.class], o.collision.class)
             local side = nil
 
             if wasVerticallyAligned(e, o) then
@@ -80,17 +121,14 @@ function Collision:update(dt)
                     if collide then
                         e.x = e.x - (e.x + e.width - o.x)
                     end
+
+                    side = 'right'
                 elseif e.x + e.width / 2 > o.x + o.width / 2 then
                     -- left collision
                     if collide then
                         e.x = e.x + (o.x + o.width - e.x)
                     end
-                end
 
-                -- after collision has been resolved (and maybe corrected) get side
-                if e.x + e.width == o.x then
-                    side = 'right'
-                elseif e.x == o.x + o.width then
                     side = 'left'
                 end
             elseif wasHorizontallyAligned(e, o) then
@@ -99,22 +137,20 @@ function Collision:update(dt)
                     if collide then
                         e.y = e.y - (e.y + e.height - o.y)
                     end
+
+                    side = 'bottom'
                 elseif e.y + e.height / 2 > o.y + o.height / 2 then
                     -- top collision
                     if collide then
                         e.y = e.y + (o.y + o.height - e.y)
                     end
-                end
 
-                if e.y + e.height == o.y then
-                    side = 'bottom'
-                elseif e.y == o.y + o.height then
                     side = 'top'
                 end
             end
 
-            if not properties[e].has_collided and side then
-                properties[e].has_collided = true
+            if not entity_props[e].has_collided and side then
+                entity_props[e].has_collided = true
                 if e.collision.events and e.collision.events[o.collision.class] then
                     e.collision.events[o.collision.class](o, side)
                 end
@@ -122,12 +158,13 @@ function Collision:update(dt)
         end)
 
         if not overlaps then
-            properties[e].has_collided = false
+            entity_props[e].has_collided = false
         end
     end
 end
 
 return {
+    GROUP_NAME = GROUP_NAME,
     system = Collision,
     group = group
 }
