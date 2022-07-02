@@ -8,6 +8,7 @@ function Walls:new(area)
     self.area = area
 
     self.area:queue({
+        Wall(area, 175, 50, { width = 100, height = 1 }),
         Wall(area, vars.gw, 0, { width = 1, height = vars.gh }), -- right
         Wall(area, 0, 0, { width = 1, height = vars.gh }), -- left
         Wall(area, 0, 0, { width = vars.gw, height = 1 }), -- top

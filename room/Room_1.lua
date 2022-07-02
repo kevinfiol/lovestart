@@ -31,7 +31,7 @@ function Room_1:new()
     self.walls = Walls(self.area)
     self.canvas = love.graphics.newCanvas(vars.gw, vars.gh)
 
-    local player = Player(self.area, 10, 10)
+    local player = Player(self.area, 200, 10)
 
     self.area:queue({
         player

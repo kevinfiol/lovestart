@@ -1,6 +1,7 @@
 local baton = require 'lib.baton'
 local Enum = require 'enum'
 local Entity = require 'engine.Entity'
+local Rectangle = require 'engine.Rectangle'
 local util = require 'engine.util'
 
 local Player = Entity:extend()
@@ -20,11 +21,14 @@ function Player:new(area, x, y, opts)
     self.accel = { x = 0, y = 0 }
     self.max_vel = { x = 200, y = 200 }
     self.drag = { x = 800, y = 800 }
-    self.last = { x = x, y = y }
     self.angle = 0
     self.angular_vel = 0
+    self.last = Rectangle(self.x, self.y, self.width, self.height)
     self.collision = {
         class = Enum.Collision.Class.Player,
+        transparent = {
+            bottom = true
+        },
         events = {
             [Enum.Collision.Class.Wall] = util.bind(self, self.onWallCollision)
         }
@@ -55,7 +59,7 @@ function Player:update(dt)
         self:move()
     end
 
-    p(self.touching)
+    -- p(self.collision.touching)
 end
 
 function Player:draw()

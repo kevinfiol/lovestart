@@ -14,7 +14,7 @@ local VALIDATOR = mishape({
     accel = { x = 'number', y = 'number' },
     max_vel = { x = 'number', y = 'number' },
     drag = { x = 'number', y = 'number' },
-    last = { x = 'number', y = 'number' },
+    last = 'object',
 })
 
 local group = {
@@ -46,8 +46,8 @@ function Physics:update(dt)
     if dt == 0 then return end
     for _, e in ipairs(self.pool.groups[GROUP_NAME].entities) do
         -- store last position
-        e.last.x = e.x
-        e.last.y = e.y
+        -- e.last is an instance of Rectangle
+        e.last:set(e.x, e.y, e.width, e.height)
 
         -- update velocity
         e.vel.x = e.vel.x + e.accel.x * dt
