@@ -18,21 +18,20 @@ function Player:new(area, x, y, opts)
 
     self.systems = { 'physics', 'collision' }
     self.vel = { x = 0, y = 0 }
-    self.accel = { x = 0, y = 0 }
-    self.max_vel = { x = 200, y = 200 }
+    self.accel = { x = 0, y = 400 }
+    self.max_vel = { x = 200, y = 800 }
     self.drag = { x = 800, y = 800 }
     self.angle = 0
     self.angular_vel = 0
     self.last = Rectangle(self.x, self.y, self.width, self.height)
     self.collision = {
         class = Enum.Collision.Class.Player,
-        transparent = {
-            bottom = true
-        },
         events = {
             [Enum.Collision.Class.Wall] = util.bind(self, self.onWallCollision)
         }
     }
+
+    self.grounded = false
 
     self.input = baton.new({
         controls = {
@@ -56,10 +55,8 @@ function Player:update(dt)
 
     if self.input then
         self.input:update()
-        self:move()
+        self:move(dt)
     end
-
-    -- p(self.collision.touching)
 end
 
 function Player:draw()
@@ -72,28 +69,19 @@ function Player:draw()
     )
 end
 
-function Player:move()
+function Player:move(dt)
     if self.input:down('right') then
-        self.accel.x = SPEED
+        self.x = self.x - SPEED * dt
     elseif self.input:down('left') then
-        self.accel.x = -SPEED
-    else
-        self.accel.x = 0
-    end
-
-    if self.input:down('up') then
-        self.accel.y = -SPEED
-    elseif self.input:down('down') then
-        self.accel.y = SPEED
-    else
-        self.accel.y = 0
+        self.x = self.x + SPEED * dt
     end
 end
 
 function Player:onWallCollision(wall, side)
-    -- print('hit ' .. wall.collision.class .. ' at ' .. side)
-    -- print('position when hit: ')
-    -- p(self.y)
+    if side == 'bottom' then
+        self.grounded = true;
+        self.accel.y = 0;
+    end
 end
 
 return Player

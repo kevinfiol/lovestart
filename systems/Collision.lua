@@ -41,21 +41,33 @@ local ignores = {
 -- reduces property pollution in entities
 local entity_props = {}
 
-local function isTouching(a, b)
+local function isVerticallyAligned(a, b)
+    return a.y < b.y + b.height
+        and a.y + a.height > b.y
+end
+
+local function isHorizontallyAligned(a, b)
+    return a.x < b.x + b.width
+        and a.x + a.width > b.x
+end
+
+local function isOverlapping(a, b)
     return a.x + a.width >= b.x
         and a.x <= b.x + b.width
         and a.y + a.height >= b.y
         and a.y <= b.y + b.height
 end
 
-local function wasVerticallyAligned(a, b)
-    return a.last.y < b.last.y + b.height
-        and a.last.y + a.height > b.last.y
-end
+local function isTouching(a, b)
+    if isVerticallyAligned(a, b) then
+        return a.x + a.width >= b.x - 1
+            and a.x <= b.x + b.width + 1
+    elseif isHorizontallyAligned(a, b) then
+        return a.y + a.height >= b.y - 1
+            and a.y <= b.y + b.height + 1
+    end
 
-local function wasHorizontallyAligned(a, b)
-    return a.last.x < b.last.x + b.width
-        and a.last.x + a.width > b.last.x
+    return false
 end
 
 local Collision = Object:extend()
@@ -102,8 +114,6 @@ function Collision:addToGroup(group_name, e)
 
         -- add to spatial hash
         collisions:add(e, e.x, e.y, e.width, e.height)
-
-        p(e.collision.class)
     end
 end
 
@@ -120,29 +130,27 @@ function Collision:update(dt)
     for _, e in ipairs(entities) do
         collisions:update(e, e.x, e.y, e.width, e.height)
 
-        if e.x ~= e.last.x then
-            e.collision.touching.right = nil
-            e.collision.touching.left = nil
-        end
-
-        if e.y ~= e.last.y then
-            e.collision.touching.bottom = nil
-            e.collision.touching.top = nil
+        for side, o in pairs(e.collision.touching) do
+            if e.collision.class == 'PLAYER' and o ~= nil and not isTouching(e, o) then
+                e.collision.touching[side] = nil
+            end
         end
 
         for o, v in pairs(entity_props[e].inside_of) do
             -- check if still inside of other object
-            if not isTouching(e, o) then
+            if not isOverlapping(e, o) then
                 entity_props[e].inside_of[o] = nil
             end
         end
     end
 
     for _, e in ipairs(entities) do
-        -- local overlaps = false
+        local overlaps = false
 
         collisions:each(e, function(o)
-            -- overlaps = true
+            if not overlaps then
+                overlaps = true
+            end
 
             local side = nil
             local collide =
@@ -150,7 +158,7 @@ function Collision:update(dt)
                 not e.collision.immovable and
                 not util.contains(ignores[e.collision.class], o.collision.class)
 
-            if wasVerticallyAligned(e, o) then
+            if isVerticallyAligned(e.last, o.last) then
                 if e.last:middleX() < o.last:middleX() then
                     -- right collision
                     if e.collision.transparent.right or o.collision.transparent.left then
@@ -160,7 +168,7 @@ function Collision:update(dt)
 
                     if collide then
                         e.x = e.x - (e.x + e.width - o.x)
-                        e.collision.touching.right = true
+                        e.collision.touching.right = o
                     end
 
                     side = 'right'
@@ -173,12 +181,12 @@ function Collision:update(dt)
 
                     if collide then
                         e.x = e.x + (o.x + o.width - e.x)
-                        e.collision.touching.left = true
+                        e.collision.touching.left = o
                     end
 
                     side = 'left'
                 end
-            elseif wasHorizontallyAligned(e, o) then
+            elseif isHorizontallyAligned(e.last, o.last) then
                 if e.last:middleY() < o.last:middleY() then
                     -- bottom collision
                     if e.collision.transparent.bottom or o.collision.transparent.top then
@@ -188,7 +196,7 @@ function Collision:update(dt)
 
                     if collide then
                         e.y = e.y - (e.y + e.height - o.y)
-                        e.collision.touching.bottom = true
+                        e.collision.touching.bottom = o
                     end
 
                     side = 'bottom'
@@ -201,24 +209,24 @@ function Collision:update(dt)
 
                     if collide then
                         e.y = e.y + (o.y + o.height - e.y)
-                        e.collision.touching.top = true
+                        e.collision.touching.top = o
                     end
 
                     side = 'top'
                 end
             end
 
-            -- if not entity_props[e].has_collided and side then
-            --     entity_props[e].has_collided = true
-            --     if e.collision.events and e.collision.events[o.collision.class] then
-            --         e.collision.events[o.collision.class](o, side)
-            --     end
-            -- end
+            if not entity_props[e].has_collided and side then
+                entity_props[e].has_collided = true
+                if e.collision.events and e.collision.events[o.collision.class] then
+                    e.collision.events[o.collision.class](o, side)
+                end
+            end
         end)
 
-        -- if not overlaps then
-        --     entity_props[e].has_collided = false
-        -- end
+        if not overlaps then
+            entity_props[e].has_collided = false
+        end
     end
 end
 

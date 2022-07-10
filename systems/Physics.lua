@@ -14,7 +14,7 @@ local VALIDATOR = mishape({
     accel = { x = 'number', y = 'number' },
     max_vel = { x = 'number', y = 'number' },
     drag = { x = 'number', y = 'number' },
-    last = 'object',
+    last = 'object'
 })
 
 local group = {
