@@ -113,7 +113,8 @@ function Collision:addToGroup(group_name, e)
         }
 
         -- add to spatial hash
-        collisions:add(e, e.x, e.y, e.width, e.height)
+        -- add 1px border to detect when "touching"
+        collisions:add(e, e.x + 1, e.y + 1, e.width + 1, e.height + 1)
     end
 end
 
@@ -128,7 +129,9 @@ function Collision:update(dt)
     local entities = self.pool.groups[GROUP_NAME].entities
 
     for _, e in ipairs(entities) do
-        collisions:update(e, e.x, e.y, e.width, e.height)
+        -- update spatial hash
+        -- add 1px border to detect when "touching"
+        collisions:update(e, e.x + 1, e.y + 1, e.width + 1, e.height + 1)
 
         for side, o in pairs(e.collision.touching) do
             if e.collision.class == 'PLAYER' and o ~= nil and not isTouching(e, o) then
@@ -153,22 +156,23 @@ function Collision:update(dt)
             end
 
             local side = nil
-            local collide =
-                not entity_props[e].inside_of[o] and
-                not e.collision.immovable and
-                not util.contains(ignores[e.collision.class], o.collision.class)
+
+            local shouldCollide = not (
+                entity_props[e].inside_of[o] or
+                e.collision.immovable or
+                util.contains(ignores[e.collision.class], o.collision.class)
+            )
 
             if isVerticallyAligned(e.last, o.last) then
                 if e.last:middleX() < o.last:middleX() then
                     -- right collision
                     if e.collision.transparent.right or o.collision.transparent.left then
                         entity_props[e].inside_of[o] = true
-                        collide = false
+                        shouldCollide = false
                     end
 
-                    if collide then
+                    if shouldCollide then
                         e.x = e.x - (e.x + e.width - o.x)
-                        e.collision.touching.right = o
                     end
 
                     side = 'right'
@@ -176,27 +180,32 @@ function Collision:update(dt)
                     -- left collision
                     if e.collision.transparent.left or o.collision.transparent.right then
                         entity_props[e].inside_of[o] = true
-                        collide = false
+                        shouldCollide = false
                     end
 
-                    if collide then
+                    if shouldCollide then
                         e.x = e.x + (o.x + o.width - e.x)
-                        e.collision.touching.left = o
                     end
 
                     side = 'left'
+                end
+
+                -- check if touching
+                if (e.x + e.width) == o.x then
+                    e.collision.touching.right = o
+                elseif e.x == (o.x + o.width) then
+                    e.collision.touching.left = o
                 end
             elseif isHorizontallyAligned(e.last, o.last) then
                 if e.last:middleY() < o.last:middleY() then
                     -- bottom collision
                     if e.collision.transparent.bottom or o.collision.transparent.top then
                         entity_props[e].inside_of[o] = true
-                        collide = false
+                        shouldCollide = false
                     end
 
-                    if collide then
+                    if shouldCollide then
                         e.y = e.y - (e.y + e.height - o.y)
-                        e.collision.touching.bottom = o
                     end
 
                     side = 'bottom'
@@ -204,15 +213,21 @@ function Collision:update(dt)
                     -- top collision
                     if e.collision.transparent.top or o.collision.transparent.bottom then
                         entity_props[e].inside_of[o] = true
-                        collide = false
+                        shouldCollide = false
                     end
 
-                    if collide then
+                    if shouldCollide then
                         e.y = e.y + (o.y + o.height - e.y)
-                        e.collision.touching.top = o
                     end
 
                     side = 'top'
+                end
+
+                -- check if touching
+                if (e.y + e.height) == (o.y) then
+                    e.collision.touching.bottom = o
+                elseif e.y == (o.y + o.height) then
+                    e.collision.touching.top = o
                 end
             end
 
