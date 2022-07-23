@@ -6,9 +6,11 @@ local util = require 'engine.util'
 
 local Player = Entity:extend()
 
-local SPEED = 300
+local SPEED = 130
 local WIDTH = 20
 local HEIGHT = 20
+local GRAVITY = 400
+local JUMP_VEL = -400
 
 function Player:new(area, x, y, opts)
     opts = opts or {}
@@ -18,34 +20,29 @@ function Player:new(area, x, y, opts)
 
     self.systems = { 'physics', 'collision' }
     self.vel = { x = 0, y = 0 }
-    self.accel = { x = 0, y = 0 }
-    self.max_vel = { x = 200, y = 200 }
+    self.accel = { x = 0, y = GRAVITY }
+    self.max_vel = { x = 200, y = 800 }
     self.drag = { x = 800, y = 800 }
     self.angle = 0
     self.angular_vel = 0
     self.last = Rectangle(self.x, self.y, self.width, self.height)
     self.collision = {
-        class = Enum.Collision.Class.Player,
-        events = {
-            [Enum.Collision.Class.Wall] = util.bind(self, self.onWallCollision)
-        }
+        class = Enum.Collision.Class.Player
     }
 
-    -- self.grounded = false
+    self.grounded = false
 
     self.input = baton.new({
         controls = {
             left = { 'key:left', 'key:a' },
             right = { 'key:right', 'key:d' },
-            up = { 'key:up', 'key:w' },
-            down = { 'key:down', 'key:s' }
+            jump = { 'key:c' }
         }
     })
 
     self:schema({
         collision = {
-            class = 'string',
-            events = 'object'
+            class = 'string'
         }
     })
 end
@@ -53,12 +50,26 @@ end
 function Player:update(dt)
     Player.super.update(self, dt)
 
-    if self.input then
-        self.input:update()
-        self:move()
+    if self.collision.touching.bottom then
+        local o = self.collision.touching.bottom
+        if o.class_name == 'WALL' then
+            if not self.grounded then
+                self.grounded = true
+                self.accel.y = 0
+            end
+        end
+    else
+        if self.grounded then
+            self.grounded = false
+            self.accel.y = GRAVITY
+        end
     end
 
-    p(self.collision.touching.bottom ~= nil)
+    if self.input then
+        self.input:update()
+        self:move(dt)
+        self:jump()
+    end
 end
 
 function Player:draw()
@@ -71,26 +82,29 @@ function Player:draw()
     )
 end
 
-function Player:move()
-    if self.input:down('right') then
-        self.accel.x = SPEED
-    elseif self.input:down('left') then
-        self.accel.x = -SPEED
-    else
-        self.accel.x = 0
+function Player:move(dt)
+    if self.input:down('left') then
+        self.x = self.x - SPEED * dt
+    elseif self.input:down('right') then
+        self.x = self.x + SPEED * dt
+    end
+end
+
+function Player:jump()
+    if not self.grounded then
+        return
     end
 
-    if self.input:down('up') then
-        self.accel.y = -SPEED
-    elseif self.input:down('down') then
-        self.accel.y = SPEED
-    else
-        self.accel.y = 0
+    if self.input:pressed('jump') then
+        self.vel.y = JUMP_VEL
     end
 end
 
 function Player:onWallCollision(wall, side)
-    print('hit ' .. wall.collision.class .. ' at ' .. side)
+    if side == 'bottom' then
+        self.grounded = true;
+        self.accel.y = 0;
+    end
 end
 
 return Player

@@ -17,16 +17,10 @@ local Room_1 = Object:extend()
 
 function Room_1:new()
     self.area = Area(
-        lume.merge(
-            OffscreenDeath.group,
-            Physics.group,
-            Collision.group
-        )
-    , {
-        OffscreenDeath.system,
-        Physics.system,
-        Collision.system
-    })
+        OffscreenDeath,
+        Physics,
+        Collision
+    )
 
     self.walls = Walls(self.area)
     self.canvas = love.graphics.newCanvas(vars.gw, vars.gh)

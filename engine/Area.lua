@@ -1,5 +1,6 @@
 local Object = require 'lib.classic'
 local nata = require 'lib.nata'
+local lume = require 'lib.lume'
 
 local Area = Object:extend()
 
@@ -13,9 +14,15 @@ local function onRemove(entity)
     end
 end
 
-function Area:new(groups, systems)
-    groups = groups or {}
-    systems = systems or {}
+function Area:new(...)
+    local args = {...}
+    local groups = {}
+    local systems = {}
+
+    for _, v in ipairs(args) do
+        groups = lume.merge(groups, v.group)
+        table.insert(systems, v.system)
+    end
 
     self.pool = nata.new({
         groups = groups,

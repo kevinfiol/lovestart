@@ -18,8 +18,8 @@ function Player:new(area, x, y, opts)
 
     self.systems = { 'physics', 'collision' }
     self.vel = { x = 0, y = 0 }
-    self.accel = { x = 0, y = 400 }
-    self.max_vel = { x = 200, y = 800 }
+    self.accel = { x = 0, y = 0 }
+    self.max_vel = { x = 200, y = 200 }
     self.drag = { x = 800, y = 800 }
     self.angle = 0
     self.angular_vel = 0
@@ -31,7 +31,7 @@ function Player:new(area, x, y, opts)
         }
     }
 
-    self.grounded = false
+    -- self.grounded = false
 
     self.input = baton.new({
         controls = {
@@ -55,8 +55,10 @@ function Player:update(dt)
 
     if self.input then
         self.input:update()
-        self:move(dt)
+        self:move()
     end
+
+    p(self.collision.touching.bottom ~= nil)
 end
 
 function Player:draw()
@@ -69,19 +71,26 @@ function Player:draw()
     )
 end
 
-function Player:move(dt)
+function Player:move()
     if self.input:down('right') then
-        self.x = self.x - SPEED * dt
+        self.accel.x = SPEED
     elseif self.input:down('left') then
-        self.x = self.x + SPEED * dt
+        self.accel.x = -SPEED
+    else
+        self.accel.x = 0
+    end
+
+    if self.input:down('up') then
+        self.accel.y = -SPEED
+    elseif self.input:down('down') then
+        self.accel.y = SPEED
+    else
+        self.accel.y = 0
     end
 end
 
 function Player:onWallCollision(wall, side)
-    if side == 'bottom' then
-        self.grounded = true;
-        self.accel.y = 0;
-    end
+    print('hit ' .. wall.collision.class .. ' at ' .. side)
 end
 
 return Player
