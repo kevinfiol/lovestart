@@ -1,4 +1,6 @@
 local Rectangle = require 'engine.Rectangle'
+local lume = require 'lib.lume'
+local sodapop = require 'lib.sodapop'
 local mishape = require 'lib.mishape'
 
 local Entity = Rectangle:extend()
@@ -13,12 +15,19 @@ function Entity:new(class_name, area, x, y, width, height)
     self.area = area
     self.systems = {}
     self.dead = false
+    self.sprite = nil
 end
 
 function Entity:update(dt)
+    if self.sprite then
+        self.sprite:update(dt)
+    end
 end
 
 function Entity:draw()
+    if self.sprite then
+        self.sprite:draw()
+    end
 end
 
 function Entity:destroy()
@@ -28,6 +37,68 @@ function Entity:destroy()
     for k, _ in pairs(self) do
         self[k] = nil
     end
+end
+
+function Entity:loadSprite(filename, cfg)
+    cfg = cfg or {}
+    cfg.offset = cfg.offset or {}
+    local new_fn = cfg.animated and sodapop.newAnimatedSprite or sodapop.newSprite
+
+    -- IMPORTANT:
+    -- The Entity's `width` and `height` will determine its bounding box
+    -- the width and height provided to the sprite should match that of the actual sprite image
+    local image = love.graphics.newImage(filename)
+    local width = cfg.width or self.width
+    local height = cfg.height or self.height
+    local w_half = width / 2
+    local h_half = height / 2
+    local offset_x = cfg.offset.x or 0
+    local offset_y = cfg.offset.y or 0
+
+    -- init soda sprite
+    self.sprite = new_fn(
+        self.x + w_half,
+        self.y + h_half
+    )
+
+    self.sprite:setAnchor(function ()
+        return self.x + w_half - offset_x,
+            self.y + h_half - offset_y
+    end)
+
+    -- load animations
+    if cfg.animations then
+        for name, animation in pairs(cfg.animations) do
+            self.sprite:addAnimation(name, lume.extend({
+                image = image,
+                frameWidth = width,
+                frameHeight = height,
+                frames = {}
+            }, animation))
+        end
+
+        self.sprite:switch(cfg.initial)
+    end
+
+    return self.sprite
+end
+
+function Entity:flipX()
+    if not self.sprite then return end
+    self.sprite.flipX = not self.sprite.flipX
+end
+
+function Entity:flipY()
+    if not self.sprite then return end
+    self.sprite.flipY = not self.sprite.flipY
+end
+
+function Entity:animation(animation)
+    if not self.sprite then return end
+
+    -- dont switch if animation is already playing
+    if self.sprite.animation == animation then return end
+    self.sprite:switch(animation)
 end
 
 -- debug methods

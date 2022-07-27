@@ -7,8 +7,8 @@ local util = require 'engine.util'
 local Player = Entity:extend()
 
 local SPEED = 130
-local WIDTH = 20
-local HEIGHT = 20
+local WIDTH = 11
+local HEIGHT = 14
 local GRAVITY = 400
 local JUMP_VEL = -400
 
@@ -27,16 +27,43 @@ function Player:new(area, x, y, opts)
     self.angular_vel = 0
     self.last = Rectangle(self.x, self.y, self.width, self.height)
     self.collision = {
-        class = Enum.Collision.Class.Player
+        class = Enum.Collision.Class.Player,
+        events = {
+            [Enum.Collision.Class.Wall] = util.bind(self, self.onWallCollision)
+        }
     }
 
+    self.jumping = false
     self.grounded = false
+    self.walking = false
 
     self.input = baton.new({
         controls = {
             left = { 'key:left', 'key:a' },
             right = { 'key:right', 'key:d' },
             jump = { 'key:c' }
+        }
+    })
+
+    self.sprite = self:loadSprite('assets/sprite/tbone.png', {
+        animated = true,
+        width = 16,
+        height = 16,
+        offset = { x = 2, y = 3 },
+        initial = 'idle',
+        animations = {
+            idle = {
+                frames = { {1, 1, 4, 1, 0.1} }
+            },
+            walk = {
+                frames = { {8, 1, 11, 1, 0.1} }
+            },
+            fall = {
+                frames = { {13, 1, 13, 1, 0.1} }
+            },
+            jump = {
+                frames = { {12, 1, 12, 1, 0.1} }
+            }
         }
     })
 
@@ -73,26 +100,60 @@ function Player:update(dt)
 end
 
 function Player:draw()
-    love.graphics.rectangle(
-        'line',
-        self.x,
-        self.y,
-        self.width,
-        self.height
-    )
+    Player.super.draw(self)
+    -- love.graphics.rectangle(
+    --     'line',
+    --     self.x,
+    --     self.y,
+    --     self.width,
+    --     self.height
+    -- )
 end
 
 function Player:move(dt)
     if self.input:down('left') then
         self.x = self.x - SPEED * dt
+
+        if not self.sprite.flipX then
+            self:flipX()
+        end
+
+        if not self.walking then
+            self.walking = true
+            self:animation('walk')
+        end
     elseif self.input:down('right') then
         self.x = self.x + SPEED * dt
+
+        if self.sprite.flipX then
+            self:flipX()
+        end
+
+        if not self.walking then
+            self.walking = true
+            self:animation('walk')
+        end
+    end
+
+    local stopped_walking =
+        self.input:released('right') or
+        self.input:released('left')
+        and not (
+            self.input:down('right') or
+            self.input:down('left')
+        )
+
+    if stopped_walking then
+        self.walking = false
+        self.sprite:switch('idle')
     end
 end
 
 function Player:jump()
-    if not self.grounded then
-        return
+    if self.vel.y < 0 then
+        self:animation('jump')
+    elseif self.vel.y > 0 then
+        self:animation('fall')
     end
 
     if self.input:pressed('jump') then
@@ -100,10 +161,19 @@ function Player:jump()
     end
 end
 
-function Player:onWallCollision(wall, side)
+function Player:onWallCollision(_, side)
+    if side == 'top' then
+        self.vel.y = 0
+    end
+
     if side == 'bottom' then
-        self.grounded = true;
-        self.accel.y = 0;
+        self.vel.y = 0
+
+        if self.input:down('left') or self.input:down('right') then
+            self:animation('walk')
+        else
+            self:animation('idle')
+        end
     end
 end
 

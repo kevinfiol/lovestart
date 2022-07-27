@@ -74,7 +74,10 @@ function love.update(dt)
 end
 
 function love.draw()
-    love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
+    if _G.DEBUG then
+        love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
+        love.graphics.print('RAM (in mB): ' .. collectgarbage('count') / 1000, 10, 30)
+    end
     if rooms.current_room then
         rooms.current_room:draw()
     end
