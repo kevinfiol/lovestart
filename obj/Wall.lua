@@ -6,7 +6,7 @@ local Wall = Entity:extend()
 function Wall:new(area, x, y, opts)
     opts = opts or {}
     Wall.super.new(self, 'WALL', area, x, y, opts.width, opts.height)
-    
+
     self.systems = { 'collision' }
     self.collision = {
         class = Enum.Collision.Class.Wall,

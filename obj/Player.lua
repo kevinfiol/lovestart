@@ -19,13 +19,7 @@ function Player:new(area, x, y, opts)
     Player.super.new(self, 'PLAYER', area, x, y, opts.width, opts.height)
 
     self.systems = { 'physics', 'collision' }
-    self.vel = { x = 0, y = 0 }
-    self.accel = { x = 0, y = GRAVITY }
-    self.max_vel = { x = 200, y = 800 }
-    self.drag = { x = 800, y = 800 }
-    self.angle = 0
-    self.angular_vel = 0
-    self.last = Rectangle(self.x, self.y, self.width, self.height)
+
     self.collision = {
         class = Enum.Collision.Class.Player,
         events = {
@@ -33,6 +27,12 @@ function Player:new(area, x, y, opts)
         }
     }
 
+    self.vel = { x = 0, y = 0 }
+    self.accel = { x = 0, y = GRAVITY }
+    self.max_vel = { x = 200, y = 800 }
+    self.drag = { x = 800, y = 800 }
+    self.angle = 0
+    self.angular_vel = 0
     self.jumping = false
     self.grounded = false
     self.walking = false
@@ -68,8 +68,15 @@ function Player:new(area, x, y, opts)
     })
 
     self:schema({
+        jumping = 'boolean',
+        grounded = 'boolean',
+        walking = 'boolean',
+        input = 'table',
+        sprite = 'table',
+        systems = 'table',
         collision = {
-            class = 'string'
+            class = 'string',
+            events = 'table'
         }
     })
 end
@@ -101,13 +108,6 @@ end
 
 function Player:draw()
     Player.super.draw(self)
-    -- love.graphics.rectangle(
-    --     'line',
-    --     self.x,
-    --     self.y,
-    --     self.width,
-    --     self.height
-    -- )
 end
 
 function Player:move(dt)
@@ -156,7 +156,7 @@ function Player:jump()
         self:animation('fall')
     end
 
-    if self.input:pressed('jump') then
+    if self.input:pressed('jump') and self.grounded then
         self.vel.y = JUMP_VEL
     end
 end

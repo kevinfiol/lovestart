@@ -24,7 +24,8 @@ function love.load()
     if _G.DEBUG then
         debug_input = baton.new({
             controls = {
-                reset = { 'key:r' }
+                reset = { 'key:r' },
+                boxes = { 'key:1' }
             }
         })
     end
@@ -58,10 +59,18 @@ function love.update(dt)
         -- will call init after every swap
         lurker.postswap = init
 
+        -- debug controls
         debug_input:update()
-
         if debug_input:pressed('reset') then
             init()
+        end
+
+        if debug_input:pressed('boxes') then
+            if _G.DEBUG_BOXES == nil then
+                _G.DEBUG_BOXES = true
+            else
+                _G.DEBUG_BOXES = not _G.DEBUG_BOXES
+            end
         end
     end
 

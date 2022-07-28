@@ -1,6 +1,6 @@
 local function noop() end
 
--- _G.DEBUG = true
+-- _G.DEBUG = false
 _G.DEBUG = true
 
 local Camera = require 'lib.camera'

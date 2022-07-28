@@ -1,8 +1,8 @@
 local util = require 'engine.util'
+local Rectangle = require 'engine.Rectangle'
 local lume = require 'lib.lume'
 local Object = require 'lib.classic'
 local mishape = require 'lib.mishape'
-local log = require 'lib.log'
 
 local GROUP_NAME = 'physics'
 local VALIDATOR = mishape({
@@ -20,7 +20,7 @@ local VALIDATOR = mishape({
 local group = {
     [GROUP_NAME] = {
         filter = function (e)
-            return lume.find(e.systems, GROUP_NAME) ~= nil
+            return util.contains(e.systems, GROUP_NAME)
         end
     }
 }
@@ -38,6 +38,10 @@ function Physics:addToGroup(group_name, e)
                     .. '\n\t entity class_name: ' .. e.class_name
                 error(err)
             end
+        end
+
+        if not e.last then
+            e.last = Rectangle(e.x, e.y, e.width, e.height)
         end
     end
 end

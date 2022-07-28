@@ -88,7 +88,7 @@ function Collision:addToGroup(group_name, e)
 
         if not e.last then
             -- monkey-patch it in in the case that the entity is not using the `physics` system
-            -- in this case, the entity is most likely an `immovable`
+            -- in that case, the entity is most likely an `immovable`
             e.last = Rectangle(e.x, e.y, e.width, e.height)
         end
 

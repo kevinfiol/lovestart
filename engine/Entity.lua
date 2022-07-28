@@ -28,6 +28,16 @@ function Entity:draw()
     if self.sprite then
         self.sprite:draw()
     end
+
+    if _G.DEBUG_BOXES then
+        love.graphics.rectangle(
+            'line',
+            self.x,
+            self.y,
+            self.width,
+            self.height
+        )
+    end
 end
 
 function Entity:destroy()

@@ -131,7 +131,7 @@ end
 function Sprite:switch(name, resume)
   assert(self.animations[name], 'No animation named '..name)
   self.current = self.animations[name]
-  self.animation = name --kf
+  self.animation = name -- kf a small patch
   if resume then else self.current:goToFrame(1) end
 end
 
