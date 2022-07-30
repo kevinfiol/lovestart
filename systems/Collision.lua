@@ -108,7 +108,12 @@ function Collision:addToGroup(group_name, e)
 
         -- init entity properties only visible to this system
         entity_props[e] = {
-            has_collided = false,
+            has_collided = {
+                top = false,
+                bottom = false,
+                left = false,
+                right = false
+            },
             inside_of = {}
         }
 
@@ -134,12 +139,13 @@ function Collision:update(dt)
         collisions:update(e, e.x + 1, e.y + 1, e.width + 1, e.height + 1)
 
         for side, o in pairs(e.collision.touching) do
-            if e.collision.class == 'PLAYER' and o ~= nil and not isTouching(e, o) then
+            if o ~= nil and not isTouching(e, o) then
                 e.collision.touching[side] = nil
+                entity_props[e].has_collided[side] = false
             end
         end
 
-        for o, v in pairs(entity_props[e].inside_of) do
+        for o, _ in pairs(entity_props[e].inside_of) do
             -- check if still inside of other object
             if not isOverlapping(e, o) then
                 entity_props[e].inside_of[o] = nil
@@ -148,20 +154,14 @@ function Collision:update(dt)
     end
 
     for _, e in ipairs(entities) do
-        local overlaps = false
-
         collisions:each(e, function(o)
-            if not overlaps then
-                overlaps = true
+            if util.contains(ignores[e.collision.class], o.collision.class) then
+                -- ignore
+                return
             end
 
             local side = nil
-
-            local shouldCollide = not (
-                entity_props[e].inside_of[o] or
-                e.collision.immovable or
-                util.contains(ignores[e.collision.class], o.collision.class)
-            )
+            local shouldCollide = not (entity_props[e].inside_of[o] or e.collision.immovable)
 
             if isVerticallyAligned(e.last, o.last) then
                 if e.last:middleX() < o.last:middleX() then
@@ -231,17 +231,13 @@ function Collision:update(dt)
                 end
             end
 
-            if not entity_props[e].has_collided and side then
-                entity_props[e].has_collided = true
+            if side and not entity_props[e].has_collided[side] then
+                entity_props[e].has_collided[side] = true
                 if e.collision.events and e.collision.events[o.collision.class] then
                     e.collision.events[o.collision.class](o, side)
                 end
             end
         end)
-
-        if not overlaps then
-            entity_props[e].has_collided = false
-        end
     end
 end
 

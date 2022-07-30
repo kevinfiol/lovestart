@@ -153,6 +153,7 @@ function Player:jump()
     if self.vel.y < 0 then
         self:animation('jump')
     elseif self.vel.y > 0 then
+        -- p('here')
         self:animation('fall')
     end
 
