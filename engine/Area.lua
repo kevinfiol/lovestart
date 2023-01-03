@@ -19,9 +19,9 @@ function Area:new(...)
     local groups = {}
     local systems = {}
 
-    for _, v in ipairs(args) do
-        groups = lume.merge(groups, v.group)
-        table.insert(systems, v.system)
+    for _, system in ipairs(args) do
+        groups = lume.merge(groups, system.group)
+        table.insert(systems, system)
     end
 
     self.pool = nata.new({

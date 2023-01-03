@@ -1,7 +1,7 @@
 local vector = {}
 vector.__index = vector
 
--- -- could also use lume.angle + lume.vector
+-- could also use lume.angle + lume.vector
 function vector.getUnitVector(x1, y1, x2, y2)
     local v = { x = (x2 - x1), y = (y2 - y1) }
     local magnitude = math.sqrt((v.x * v.x) + (v.y * v.y))

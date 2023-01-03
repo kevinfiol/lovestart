@@ -1,7 +1,5 @@
-local baton = require 'lib.baton'
 local Enum = require 'enum'
 local Entity = require 'engine.Entity'
-local Rectangle = require 'engine.Rectangle'
 local util = require 'engine.util'
 
 local Player = Entity:extend()
@@ -37,7 +35,7 @@ function Player:new(area, x, y, opts)
     self.grounded = false
     self.walking = false
 
-    self.input = baton.new({
+    self.input = self:setControls({
         controls = {
             left = { 'key:left', 'key:a' },
             right = { 'key:right', 'key:d' },
@@ -100,7 +98,6 @@ function Player:update(dt)
     end
 
     if self.input then
-        self.input:update()
         self:move(dt)
         self:jump()
     end
@@ -153,7 +150,6 @@ function Player:jump()
     if self.vel.y < 0 then
         self:animation('jump')
     elseif self.vel.y > 0 then
-        -- p('here')
         self:animation('fall')
     end
 
@@ -164,7 +160,8 @@ end
 
 function Player:onWallCollision(_, side)
     if side == 'top' then
-        self.vel.y = 0
+        -- nicer than setting self.vel.y to 0
+        self.vel.y = self.vel.y / 6
     end
 
     if side == 'bottom' then

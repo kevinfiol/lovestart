@@ -2,29 +2,11 @@ local util = require 'engine.util'
 local Rectangle = require 'engine.Rectangle'
 local mishape = require 'lib.mishape'
 local shash = require 'lib.shash'
-local Object = require 'lib.classic'
+local BaseSystem = require 'engine.BaseSystem'
 local Enum = require 'enum'
 
 local GROUP_NAME = 'collision'
 local CLASS = Enum.Collision.Class
-local VALIDATOR = mishape({
-    collision = {
-        class = 'string',
-        immovable = 'boolean|nil',
-        events = 'object|nil',
-        touching = 'object|nil',
-        transparent = 'object|nil'
-    },
-    last = 'object|nil'
-})
-
-local group = {
-    [GROUP_NAME] = {
-        filter = function (e)
-            return util.contains(e.systems, GROUP_NAME)
-        end
-    }
-}
 
 -- spatial hash
 local collisions
@@ -70,21 +52,28 @@ local function isTouching(a, b)
     return false
 end
 
-local Collision = Object:extend()
+local Collision = BaseSystem:extend()
+Collision.group = BaseSystem.createFilter(GROUP_NAME)
 
 function Collision:init()
     collisions = shash.new(64)
+
+    self.group_name = GROUP_NAME
+    self.validator = mishape({
+        collision = {
+            class = 'string',
+            immovable = 'boolean|nil',
+            events = 'object|nil',
+            touching = 'object|nil',
+            transparent = 'object|nil'
+        },
+        last = 'object|nil'
+    })
 end
 
 function Collision:addToGroup(group_name, e)
     if group_name == GROUP_NAME then
-        if _G.DEBUG then
-            if not VALIDATOR(e).ok then
-                local err = '[' .. GROUP_NAME .. '] objects must follow mishape schema.'
-                    .. '\n\t entity class_name: ' .. e.class_name
-                error(err)
-            end
-        end
+        self:validateEntity(e)
 
         if not e.last then
             -- monkey-patch it in in the case that the entity is not using the `physics` system
@@ -241,8 +230,4 @@ function Collision:update(dt)
     end
 end
 
-return {
-    GROUP_NAME = GROUP_NAME,
-    system = Collision,
-    group = group
-}
+return Collision

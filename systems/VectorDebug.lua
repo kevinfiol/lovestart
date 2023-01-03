@@ -1,12 +1,9 @@
-local Object = require 'lib.classic'
+local BaseSystem = require 'lib.classic'
 
 local GROUP_NAME = 'vectored'
 
-local group = {
-    filter = { 'vector' }
-}
-
-local VectorDebug = Object:extend()
+local VectorDebug = BaseSystem:extend()
+VectorDebug.group = { filter = { 'vector' } }
 
 local LINE_MAGNITUDE = 20
 
@@ -23,8 +20,4 @@ function VectorDebug:draw()
     end
 end
 
-return {
-    GROUP_NAME = GROUP_NAME,
-    system = VectorDebug,
-    group = group
-}
+return VectorDebug

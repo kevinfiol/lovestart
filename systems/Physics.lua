@@ -1,44 +1,31 @@
-local util = require 'engine.util'
 local Rectangle = require 'engine.Rectangle'
 local lume = require 'lib.lume'
-local Object = require 'lib.classic'
+local BaseSystem = require 'engine.BaseSystem'
 local mishape = require 'lib.mishape'
 
 local GROUP_NAME = 'physics'
-local VALIDATOR = mishape({
-    x = 'number',
-    y = 'number',
-    angle = 'number',
-    angular_vel = 'number',
-    vel = { x = 'number', y = 'number' },
-    accel = { x = 'number', y = 'number' },
-    max_vel = { x = 'number', y = 'number' },
-    drag = { x = 'number', y = 'number' },
-    last = 'object'
-})
 
-local group = {
-    [GROUP_NAME] = {
-        filter = function (e)
-            return util.contains(e.systems, GROUP_NAME)
-        end
-    }
-}
-
-local Physics = Object:extend()
+local Physics = BaseSystem:extend()
+Physics.group = BaseSystem.createFilter(GROUP_NAME)
 
 function Physics:init()
+    self.group_name = GROUP_NAME
+    self.validator = mishape({
+        x = 'number',
+        y = 'number',
+        angle = 'number',
+        angular_vel = 'number',
+        vel = { x = 'number', y = 'number' },
+        accel = { x = 'number', y = 'number' },
+        max_vel = { x = 'number', y = 'number' },
+        drag = { x = 'number', y = 'number' },
+        last = 'object'
+    })
 end
 
 function Physics:addToGroup(group_name, e)
     if group_name == GROUP_NAME then
-        if _G.DEBUG then
-            if not VALIDATOR(e).ok then
-                local err = '[' .. GROUP_NAME .. '] objects must follow mishape schema.'
-                    .. '\n\t entity class_name: ' .. e.class_name
-                error(err)
-            end
-        end
+        self:validateEntity(e)
 
         if not e.last then
             e.last = Rectangle(e.x, e.y, e.width, e.height)
@@ -92,8 +79,4 @@ function Physics:update(dt)
     end
 end
 
-return {
-    GROUP_NAME = GROUP_NAME,
-    system = Physics,
-    group = group
-}
+return Physics

@@ -1,40 +1,27 @@
-local util = require 'engine.util'
 local vars = require 'vars'
-local Object = require 'lib.classic'
+local BaseSystem = require 'engine.BaseSystem'
 local mishape = require 'lib.mishape'
 
 local GROUP_NAME = 'offscreen_death'
-local VALIDATOR = mishape({
-    speed = 'number',
-    vector = { x = 'number', y = 'number' }
-})
 
-local group = {
-    [GROUP_NAME] = {
-        filter = function (e)
-            return util.contains(e.systems, GROUP_NAME)
-        end
-    }
-}
-
-local OffscreenDeath = Object:extend()
+local OffscreenDeath = BaseSystem:extend()
+OffscreenDeath.group = BaseSystem.createFilter(GROUP_NAME)
 
 function OffscreenDeath:init()
+    self.group_name = GROUP_NAME
+    self.validator = mishape({
+        speed = 'number',
+        vector = { x = 'number', y = 'number' }
+    })
 end
 
 function OffscreenDeath:addToGroup(group_name, e)
     if group_name == GROUP_NAME then
-        if _G.DEBUG then
-            if not VALIDATOR(e).ok then
-                local err = '[' .. GROUP_NAME .. '] objects must follow mishape schema.'
-                    .. '\n\t entity class_name: ' .. e.class_name
-                error(err)
-            end
-        end
+        self:validateEntity(e)
     end
 end
 
-function OffscreenDeath:update(dt)
+function OffscreenDeath:update()
     for _, e in ipairs(self.pool.groups[GROUP_NAME].entities) do
         if
             e.x > vars.gw
@@ -47,8 +34,4 @@ function OffscreenDeath:update(dt)
     end
 end
 
-return {
-    GROUP_NAME = GROUP_NAME,
-    system = OffscreenDeath,
-    group = group
-}
+return OffscreenDeath

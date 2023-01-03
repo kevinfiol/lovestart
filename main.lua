@@ -3,10 +3,14 @@ local vars = require 'vars'
 local RoomManager = require 'engine.RoomManager'
 local baton = require 'lib.baton'
 
+---@type love.Cursor
 local cursor
+---@type RoomManager
 local rooms
+
 local debug_input
 
+---@param s number
 local function resize(s)
     love.window.setMode(s * vars.gw, s * vars.gh)
     vars.sx, vars.sy = s, s

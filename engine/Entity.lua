@@ -1,6 +1,7 @@
 local Rectangle = require 'engine.Rectangle'
 local lume = require 'lib.lume'
 local sodapop = require 'lib.sodapop'
+local baton = require 'lib.baton'
 local mishape = require 'lib.mishape'
 
 local Entity = Rectangle:extend()
@@ -16,11 +17,16 @@ function Entity:new(class_name, area, x, y, width, height)
     self.systems = {}
     self.dead = false
     self.sprite = nil
+    self.input = nil
 end
 
 function Entity:update(dt)
     if self.sprite then
         self.sprite:update(dt)
+    end
+
+    if self.input then
+        self.input:update()
     end
 end
 
@@ -47,6 +53,13 @@ function Entity:destroy()
     for k, _ in pairs(self) do
         self[k] = nil
     end
+end
+
+---@param cfg table @ baton config
+---@return table @ baton instance
+function Entity:setControls(cfg)
+    self.input = baton.new(cfg)
+    return self.input
 end
 
 function Entity:loadSprite(filename, cfg)
