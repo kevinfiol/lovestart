@@ -3,9 +3,8 @@ local Enum = require 'enum'
 
 local Wall = Entity:extend()
 
-function Wall:new(area, x, y, opts)
-    opts = opts or {}
-    Wall.super.new(self, 'WALL', area, x, y, opts.width, opts.height)
+function Wall:new(area, opts)
+    Wall.super.new(self, 'WALL', area, opts)
 
     self.systems = { 'collision' }
     self.collision = {

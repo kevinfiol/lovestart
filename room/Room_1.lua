@@ -1,5 +1,4 @@
 local vars = require 'vars'
-local lume = require 'lib.lume'
 local Object = require 'lib.classic'
 local Area = require 'engine.Area'
 
@@ -25,7 +24,7 @@ function Room_1:new()
     self.walls = Walls(self.area)
     self.canvas = love.graphics.newCanvas(vars.gw, vars.gh)
 
-    local player = Player(self.area, 200, 10)
+    local player = Player(self.area, { x = 200, y = 10 })
 
     self.area:queue({
         player

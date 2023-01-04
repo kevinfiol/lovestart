@@ -1,9 +1,10 @@
+local Enum = require 'enum'
 local Rectangle = require 'engine.Rectangle'
 local lume = require 'lib.lume'
 local BaseSystem = require 'engine.BaseSystem'
 local mishape = require 'lib.mishape'
 
-local GROUP_NAME = 'physics'
+local GROUP_NAME = Enum.System.Physics
 
 local Physics = BaseSystem:extend()
 Physics.group = BaseSystem.createFilter(GROUP_NAME)

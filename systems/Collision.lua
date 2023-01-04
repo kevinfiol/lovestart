@@ -5,7 +5,7 @@ local shash = require 'lib.shash'
 local BaseSystem = require 'engine.BaseSystem'
 local Enum = require 'enum'
 
-local GROUP_NAME = 'collision'
+local GROUP_NAME = Enum.System.Collision
 local CLASS = Enum.Collision.Class
 
 -- spatial hash

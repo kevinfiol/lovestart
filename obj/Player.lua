@@ -10,13 +10,16 @@ local HEIGHT = 14
 local GRAVITY = 400
 local JUMP_VEL = -400
 
-function Player:new(area, x, y, opts)
+function Player:new(area, opts)
     opts = opts or {}
     opts.width = opts.width or WIDTH
     opts.height = opts.height or HEIGHT
-    Player.super.new(self, 'PLAYER', area, x, y, opts.width, opts.height)
+    Player.super.new(self, 'PLAYER', area, opts)
 
-    self.systems = { 'physics', 'collision' }
+    self.systems = {
+        Enum.System.Physics,
+        Enum.System.Collision
+    }
 
     self.collision = {
         class = Enum.Collision.Class.Player,

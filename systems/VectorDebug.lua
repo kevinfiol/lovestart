@@ -1,6 +1,7 @@
+local Enum = require 'enum'
 local BaseSystem = require 'lib.classic'
 
-local GROUP_NAME = 'vectored'
+local GROUP_NAME = Enum.System.VectorDebug
 
 local VectorDebug = BaseSystem:extend()
 VectorDebug.group = { filter = { 'vector' } }

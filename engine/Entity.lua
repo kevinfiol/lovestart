@@ -10,8 +10,9 @@ Entity.static = {
     noop = function() end
 }
 
-function Entity:new(class_name, area, x, y, width, height)
-    Entity.super.new(self, x, y, width, height)
+function Entity:new(class_name, area, opts)
+    opts = opts or {}
+    Entity.super.new(self, opts.x, opts.y, opts.width, opts.height)
     self.class_name = class_name
     self.area = area
     self.systems = {}

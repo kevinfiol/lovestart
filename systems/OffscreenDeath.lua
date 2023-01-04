@@ -1,8 +1,9 @@
+local Enum = require 'enum'
 local vars = require 'vars'
 local BaseSystem = require 'engine.BaseSystem'
 local mishape = require 'lib.mishape'
 
-local GROUP_NAME = 'offscreen_death'
+local GROUP_NAME = Enum.System.OffscreenDeath
 
 local OffscreenDeath = BaseSystem:extend()
 OffscreenDeath.group = BaseSystem.createFilter(GROUP_NAME)
