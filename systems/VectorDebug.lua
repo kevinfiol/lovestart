@@ -15,10 +15,10 @@ function VectorDebug:update(dt)
 end
 
 function VectorDebug:draw()
-    for _, e in ipairs(self.pool.groups[GROUP_NAME].entities) do
-        local x, y = e:middle()
-        love.graphics.line(x, y, (x + e.vector.x * LINE_MAGNITUDE), (y + e.vector.y * LINE_MAGNITUDE))
-    end
+  for _, e in ipairs(self.pool.groups[GROUP_NAME].entities) do
+    local x, y = e:middle()
+    love.graphics.line(x, y, (x + e.vector.x * LINE_MAGNITUDE), (y + e.vector.y * LINE_MAGNITUDE))
+  end
 end
 
 return VectorDebug
