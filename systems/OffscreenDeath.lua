@@ -1,18 +1,20 @@
 local Enum = require 'enum'
 local vars = require 'vars'
-local BaseSystem = require 'engine.BaseSystem'
+local System = require 'engine.System'
 local mishape = require 'lib.mishape'
 
-local GROUP_NAME = Enum.System.OffscreenDeath
+local GROUP_NAME = 'offscreen_death'
 
-local OffscreenDeath = BaseSystem:extend()
-OffscreenDeath.group = BaseSystem.createFilter(GROUP_NAME)
+local OffscreenDeath = System:extend()
+OffscreenDeath.group = System.createFilter(GROUP_NAME)
 
 function OffscreenDeath:init()
     self.group_name = GROUP_NAME
     self.validator = mishape({
         speed = 'number',
-        vector = { x = 'number', y = 'number' }
+        dead = 'boolean',
+        vector = { x = 'number', y = 'number' },
+        [GROUP_NAME] = 'boolean'
     })
 end
 

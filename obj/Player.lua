@@ -16,11 +16,6 @@ function Player:new(area, opts)
     opts.height = opts.height or HEIGHT
     Player.super.new(self, 'PLAYER', area, opts)
 
-    self.systems = {
-        Enum.System.Physics,
-        Enum.System.Collision
-    }
-
     self.collision = {
         class = Enum.Collision.Class.Player,
         events = {
@@ -28,12 +23,15 @@ function Player:new(area, opts)
         }
     }
 
-    self.vel = { x = 0, y = 0 }
-    self.accel = { x = 0, y = GRAVITY }
-    self.max_vel = { x = 200, y = 800 }
-    self.drag = { x = 800, y = 800 }
-    self.angle = 0
-    self.angular_vel = 0
+    self.physics = {
+        vel = { x = 0, y = 0 },
+        accel = { x = 0, y = GRAVITY },
+        max_vel = { x = 200, y = 800 },
+        drag = { x = 800, y = 800 },
+        angle = 0,
+        angular_vel = 0
+    }
+
     self.jumping = false
     self.grounded = false
     self.walking = false
@@ -84,19 +82,20 @@ end
 
 function Player:update(dt)
     Player.super.update(self, dt)
+    local accel = self.physics.accel
 
     if self.collision.touching.bottom then
         local o = self.collision.touching.bottom
         if o.class_name == 'WALL' then
             if not self.grounded then
                 self.grounded = true
-                self.accel.y = 0
+                accel.y = 0
             end
         end
     else
         if self.grounded then
             self.grounded = false
-            self.accel.y = GRAVITY
+            accel.y = GRAVITY
         end
     end
 
@@ -150,25 +149,29 @@ function Player:move(dt)
 end
 
 function Player:jump()
-    if self.vel.y < 0 then
+    local vel = self.physics.vel
+
+    if vel.y < 0 then
         self:animation('jump')
-    elseif self.vel.y > 0 then
+    elseif vel.y > 0 then
         self:animation('fall')
     end
 
     if self.input:pressed('jump') and self.grounded then
-        self.vel.y = JUMP_VEL
+        vel.y = JUMP_VEL
     end
 end
 
 function Player:onWallCollision(_, side)
+    local vel = self.physics.vel
+
     if side == 'top' then
         -- nicer than setting self.vel.y to 0
-        self.vel.y = self.vel.y / 6
+        vel.y = vel.y / 6
     end
 
     if side == 'bottom' then
-        self.vel.y = 0
+        vel.y = 0
 
         if self.input:down('left') or self.input:down('right') then
             self:animation('walk')

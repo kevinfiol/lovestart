@@ -1,9 +1,9 @@
 local Enum = require 'enum'
-local BaseSystem = require 'lib.classic'
+local System = require 'engine.System'
 
 local GROUP_NAME = Enum.System.VectorDebug
 
-local VectorDebug = BaseSystem:extend()
+local VectorDebug = System:extend()
 VectorDebug.group = { filter = { 'vector' } }
 
 local LINE_MAGNITUDE = 20

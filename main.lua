@@ -21,6 +21,12 @@ local function init()
 end
 
 function love.load()
+    -- vscode local lua debugger
+    if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+        require("lldebugger").start()
+    end
+
+    -- zerobrane
     if arg[#arg] == "-debug" then
         require("mobdebug").start()
     end

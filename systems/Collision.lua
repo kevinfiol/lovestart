@@ -2,10 +2,10 @@ local util = require 'engine.util'
 local Rectangle = require 'engine.Rectangle'
 local mishape = require 'lib.mishape'
 local shash = require 'lib.shash'
-local BaseSystem = require 'engine.BaseSystem'
+local System = require 'engine.System'
 local Enum = require 'enum'
 
-local GROUP_NAME = Enum.System.Collision
+local GROUP_NAME = 'collision'
 local CLASS = Enum.Collision.Class
 
 -- spatial hash
@@ -52,22 +52,22 @@ local function isTouching(a, b)
     return false
 end
 
-local Collision = BaseSystem:extend()
-Collision.group = BaseSystem.createFilter(GROUP_NAME)
+local Collision = System:extend()
+Collision.group = System.createFilter(GROUP_NAME)
 
 function Collision:init()
     collisions = shash.new(64)
 
     self.group_name = GROUP_NAME
     self.validator = mishape({
-        collision = {
+        last = 'object|nil',
+        [GROUP_NAME] = {
             class = 'string',
             immovable = 'boolean|nil',
             events = 'object|nil',
             touching = 'object|nil',
             transparent = 'object|nil'
-        },
-        last = 'object|nil'
+        }
     })
 end
 
@@ -81,13 +81,13 @@ function Collision:addToGroup(group_name, e)
             e.last = Rectangle(e.x, e.y, e.width, e.height)
         end
 
-        if not e.collision.touching then
-            e.collision.touching = {}
+        if not e[GROUP_NAME].touching then
+            e[GROUP_NAME].touching = {}
         end
 
-        if not e.collision.transparent then
+        if not e[GROUP_NAME].transparent then
             -- by default, solid on all sides
-            e.collision.transparent = {
+            e[GROUP_NAME].transparent = {
                 top = false,
                 bottom = false,
                 left = false,
@@ -127,9 +127,9 @@ function Collision:update(dt)
         -- add 1px border to detect when "touching"
         collisions:update(e, e.x + 1, e.y + 1, e.width + 1, e.height + 1)
 
-        for side, o in pairs(e.collision.touching) do
+        for side, o in pairs(e[GROUP_NAME].touching) do
             if o ~= nil and not isTouching(e, o) then
-                e.collision.touching[side] = nil
+                e[GROUP_NAME].touching[side] = nil
                 entity_props[e].has_collided[side] = false
             end
         end
@@ -144,18 +144,18 @@ function Collision:update(dt)
 
     for _, e in ipairs(entities) do
         collisions:each(e, function(o)
-            if util.contains(ignores[e.collision.class], o.collision.class) then
+            if util.contains(ignores[e[GROUP_NAME].class], o[GROUP_NAME].class) then
                 -- ignore
                 return
             end
 
             local side = nil
-            local shouldCollide = not (entity_props[e].inside_of[o] or e.collision.immovable)
+            local shouldCollide = not (entity_props[e].inside_of[o] or e[GROUP_NAME].immovable)
 
             if isVerticallyAligned(e.last, o.last) then
                 if e.last:middleX() < o.last:middleX() then
                     -- right collision
-                    if e.collision.transparent.right or o.collision.transparent.left then
+                    if e[GROUP_NAME].transparent.right or o[GROUP_NAME].transparent.left then
                         entity_props[e].inside_of[o] = true
                         shouldCollide = false
                     end
@@ -167,7 +167,7 @@ function Collision:update(dt)
                     side = 'right'
                 elseif e.last:middleX() > o.last:middleX() then
                     -- left collision
-                    if e.collision.transparent.left or o.collision.transparent.right then
+                    if e[GROUP_NAME].transparent.left or o[GROUP_NAME].transparent.right then
                         entity_props[e].inside_of[o] = true
                         shouldCollide = false
                     end
@@ -181,14 +181,14 @@ function Collision:update(dt)
 
                 -- check if touching
                 if (e.x + e.width) == o.x then
-                    e.collision.touching.right = o
+                    e[GROUP_NAME].touching.right = o
                 elseif e.x == (o.x + o.width) then
-                    e.collision.touching.left = o
+                    e[GROUP_NAME].touching.left = o
                 end
             elseif isHorizontallyAligned(e.last, o.last) then
                 if e.last:middleY() < o.last:middleY() then
                     -- bottom collision
-                    if e.collision.transparent.bottom or o.collision.transparent.top then
+                    if e[GROUP_NAME].transparent.bottom or o[GROUP_NAME].transparent.top then
                         entity_props[e].inside_of[o] = true
                         shouldCollide = false
                     end
@@ -200,7 +200,7 @@ function Collision:update(dt)
                     side = 'bottom'
                 elseif e.last:middleY() > o.last:middleY() then
                     -- top collision
-                    if e.collision.transparent.top or o.collision.transparent.bottom then
+                    if e[GROUP_NAME].transparent.top or o[GROUP_NAME].transparent.bottom then
                         entity_props[e].inside_of[o] = true
                         shouldCollide = false
                     end
@@ -214,16 +214,16 @@ function Collision:update(dt)
 
                 -- check if touching
                 if (e.y + e.height) == (o.y) then
-                    e.collision.touching.bottom = o
+                    e[GROUP_NAME].touching.bottom = o
                 elseif e.y == (o.y + o.height) then
-                    e.collision.touching.top = o
+                    e[GROUP_NAME].touching.top = o
                 end
             end
 
             if side and not entity_props[e].has_collided[side] then
                 entity_props[e].has_collided[side] = true
-                if e.collision.events and e.collision.events[o.collision.class] then
-                    e.collision.events[o.collision.class](o, side)
+                if e[GROUP_NAME].events and e[GROUP_NAME].events[o[GROUP_NAME].class] then
+                    e[GROUP_NAME].events[o[GROUP_NAME].class](o, side)
                 end
             end
         end)

@@ -1,19 +1,16 @@
-local util = require 'engine.util'
 local Object = require 'lib.classic'
 
-local BaseSystem = Object:extend()
+local System = Object:extend()
 
-BaseSystem.createFilter = function (group_name)
+System.createFilter = function (group_name)
     return {
         [group_name] = {
-            filter = function (e)
-                return util.contains(e.systems, group_name)
-            end
+            filter = { group_name }
         }
     }
 end
 
-function BaseSystem:validateEntity(e)
+function System:validateEntity(e)
     if _G.DEBUG then
         if self.validator and not self.validator(e).ok then
             local err = '[' .. self.group_name .. '] objects must follow mishape schema.'
@@ -23,4 +20,4 @@ function BaseSystem:validateEntity(e)
     end
 end
 
-return BaseSystem
+return System
